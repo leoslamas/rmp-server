@@ -1,13 +1,21 @@
 # Remote Media Pi
 
-## Docker Image Build
+## Building
 
-`docker build . -t rmp`
+```shell
+$ cargo build
+```
 
-## Building on Docker
+## Testing
 
-`docker run --rm -i rmp cargo build`
+```shell
+$ cargo test
+```
 
-## Testing on Docker
+## Docker
 
-`docker run --rm -i rmp cargo test`
+```shell 
+$ docker build . -t rmp
+$ docker run --rm -i rmp cargo build
+$ docker run --rm -i rmp cargo test
+```
