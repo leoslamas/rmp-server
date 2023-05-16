@@ -13,7 +13,7 @@ transmission-rpc = { git = "https://github.com/leoslamas/transmission-rpc.git", 
 reqwest = { version = "0.10.8", features = ["json", "rustls-tls", "blocking"], default-features = false }
 tokio = { version = "0.2.25", features = ["full"] }
 serde = { version = "1.0.59", features = ["derive"] }
-rustc-serialize = "0.3.24"
+# rustc-serialize = "0.3.24"
 enum-iterator = "0.6.0"
 env_logger = "0.7.1"
 dotenv = "0.15.0"

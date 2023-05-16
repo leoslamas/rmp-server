@@ -46,41 +46,40 @@ impl SourceAdapter for L337xTo {
             let url_sel = row.select(&url_selector).next();
             let (name, seeders, leechers, size, url);
 
-            if let (Some(name_s), Some(seed_s), Some(leech_s), Some(size_s), Some(url_s)) =
-                (name_sel, seeders_sel, leechers_sel, size_sel, url_sel)
-            {
-                let found = name_s.text().map(String::from).collect::<String>();
-                warn!("name: {}", found);
-                name = found;
-
-                let found = seed_s.text().map(String::from).collect::<String>();
-                warn!("seeders: {}", found);
-                seeders = found;
-
-                let found = leech_s.text().map(String::from).collect::<String>();
-                warn!("leechers: {}", found);
-                leechers = found;
-
-                let found = size_s.text().map(String::from).collect::<String>();
-                let found_num = found.split_whitespace().next();
-                warn!("size: {}", found_num.unwrap_or_default());
-                size = String::from(found_num.unwrap_or_default());
-
-                let found = url_s.value().attr("href");
-                if let Some(href) = found {
-                    warn!("url: {}", href);
-                    let magnet_url = format!("{}{}", BASE_URL, String::from(href));
-                    let document = self.get_document(magnet_url).unwrap();
-                    url = self
-                        .find_magnet(&document, &magnet_selector)
-                        .unwrap_or_default();
-                    warn!("magnet: {}", url);
-                } else {
-                    continue;
-                }
-            } else {
+            let (Some(name_s), Some(seed_s), Some(leech_s), Some(size_s), Some(url_s)) =
+            (name_sel, seeders_sel, leechers_sel, size_sel, url_sel) else {
                 continue;
-            }
+            };
+
+            let found = name_s.text().map(String::from).collect::<String>();
+            warn!("name: {}", found);
+            name = found;
+
+            let found = seed_s.text().map(String::from).collect::<String>();
+            warn!("seeders: {}", found);
+            seeders = found;
+
+            let found = leech_s.text().map(String::from).collect::<String>();
+            warn!("leechers: {}", found);
+            leechers = found;
+
+            let found = size_s.text().map(String::from).collect::<String>();
+            let found_num = found.split_whitespace().next();
+            warn!("size: {}", found_num.unwrap_or_default());
+            size = String::from(found_num.unwrap_or_default());
+
+            let found = url_s.value().attr("href");
+            let Some(href) = found  else {
+                continue;
+            };
+
+            warn!("url: {}", href);
+            let magnet_url = format!("{}{}", BASE_URL, String::from(href));
+            let document = self.get_document(magnet_url).unwrap();
+            url = self
+                .find_magnet(&document, &magnet_selector)
+                .unwrap_or_default();
+            warn!("magnet: {}", url);
 
             let result = SearchResult {
                 name,
@@ -124,35 +123,23 @@ mod tests {
     #[test]
     fn html_parse() {
         let adapter = get_adapter();
-        for result in adapter.select_results(adapter.scrap_from_document(fake().unwrap())).iter().take(1) {
-            assert_eq!(
-                "My.Torrent.Name", 
-                result.name
-            );
-            assert_eq!(
-                "2992", 
-                result.seeders
-            );
-            assert_eq!(
-                "173", 
-                result.leechers
-            );
-            assert_eq!(
-                "222.4",
-                result.size
-            );
-            assert_eq!(
-                "magnet:My.Magnet.Link",
-                result.url
-            );
+        for result in adapter
+            .select_results(adapter.scrap_from_document(fake().unwrap()))
+            .iter()
+            .take(1)
+        {
+            assert_eq!("My.Torrent.Name", result.name);
+            assert_eq!("2992", result.seeders);
+            assert_eq!("173", result.leechers);
+            assert_eq!("222.4", result.size);
+            assert_eq!("magnet:My.Magnet.Link", result.url);
         }
 
         let magnet_selector = Selector::parse("a[href^=magnet]").unwrap();
         let magnet = adapter
             .find_magnet(&fake().unwrap(), &magnet_selector)
             .unwrap();
-        assert_eq!("magnet:My.Magnet.Link",
-                        magnet);
+        assert_eq!("magnet:My.Magnet.Link", magnet);
     }
 
     fn get_adapter() -> Arc<impl SourceAdapter> {
