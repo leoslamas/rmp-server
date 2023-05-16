@@ -46,9 +46,9 @@ impl Searcher {
                         Some(s) => {
                             let html = adapter.scrap_from_document(s);
                             adapter.select_results(html)
-                        },
+                        }
                         None => {
-                            error!("Error scraping page!"); 
+                            error!("Error scraping page!");
                             vec![]
                         }
                     }
@@ -98,6 +98,5 @@ impl PartialEq for SearchResult {
 }
 
 pub fn searcher() -> Searcher {
-    Searcher::new()
-        .using(L337xTo::new(TorrentDownloader::new()))
+    Searcher::new().using(L337xTo::new(TorrentDownloader::new()))
 }

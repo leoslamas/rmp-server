@@ -2,7 +2,10 @@ use std::env;
 
 use serde::{Deserialize, Serialize};
 use transmission_rpc::{
-    types::{Id, Nothing, Result, RpcResponse, TorrentAction, TorrentAddArgs, TorrentAdded, TorrentGetField},
+    types::{
+        Id, Nothing, Result, RpcResponse, TorrentAction, TorrentAddArgs, TorrentAdded,
+        TorrentGetField,
+    },
     TransClient,
 };
 
@@ -25,24 +28,31 @@ impl Client {
     }
 
     pub async fn list_torrents(&self) -> Result<Vec<Torrent>> {
-        let res = self.client.torrent_get(Some(vec![
-            TorrentGetField::Id, 
-            TorrentGetField::Name, 
-            TorrentGetField::Status, 
-            TorrentGetField::Isfinished, 
-            TorrentGetField::Isstalled, 
-            TorrentGetField::Totalsize,
-            TorrentGetField::Percentdone, 
-            TorrentGetField::Error]), None).await?;
+        let res = self
+            .client
+            .torrent_get(
+                Some(vec![
+                    TorrentGetField::Id,
+                    TorrentGetField::Name,
+                    TorrentGetField::Status,
+                    TorrentGetField::Isfinished,
+                    TorrentGetField::Isstalled,
+                    TorrentGetField::Totalsize,
+                    TorrentGetField::Percentdone,
+                    TorrentGetField::Error,
+                ]),
+                None,
+            )
+            .await?;
         let torrents = res.arguments.torrents;
         Ok(torrents
             .iter()
             .map(|t| {
                 let status = match t.status {
-                     Some(0) | Some(1) | Some(2) => "paused",
-                     Some(3) | Some(4) => "downloading",
-                     Some(5) | Some(6) => "done",
-                     _ => {
+                    Some(0) | Some(1) | Some(2) => "paused",
+                    Some(3) | Some(4) => "downloading",
+                    Some(5) | Some(6) => "done",
+                    _ => {
                         if t.is_finished.is_some() && t.is_finished.unwrap() {
                             "done"
                         } else if t.error.is_some() {
@@ -52,7 +62,7 @@ impl Client {
                         } else {
                             "downloading"
                         }
-                     }
+                    }
                 };
 
                 Torrent {
@@ -71,7 +81,7 @@ impl Client {
             filename: Some(url.into()),
             ..TorrentAddArgs::default()
         };
-        
+
         self.client.torrent_add(add).await
     }
 

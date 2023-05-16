@@ -1,11 +1,11 @@
-use crate::torrent::{client::{Client}, search::{Searcher}};
+use crate::torrent::{client::Client, search::Searcher};
 use actix_web::{
     delete, get, post,
-    web::{Json, Path, Query, Data},
+    web::{Data, Json, Path, Query},
     HttpResponse, Responder,
 };
 use serde::{Deserialize, Serialize};
-use transmission_rpc::types::{RpcResponse, Nothing, Result};
+use transmission_rpc::types::{Nothing, Result, RpcResponse};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct QueryParams {
@@ -20,7 +20,7 @@ struct TorrentObj {
 #[get("/torrent/search")]
 async fn search_torrents(Query(params): Query<QueryParams>, searcher: Data<Searcher>) -> impl Responder {
     info!("Searching for {}!", params.terms);
-    
+
     if params.terms.len() > 1 {
         let search_result = searcher.search(&params.terms.trim());
         HttpResponse::Ok().json(search_result)
@@ -49,7 +49,7 @@ async fn add_torrent(torrent: Json<TorrentObj>, client: Data<Client>) -> impl Re
         Ok(r) => {
             info!("Torrent added! {:?}", r);
             HttpResponse::Ok().body(r.result)
-        },
+        }
         Err(e) => {
             error!("Torrent add error! {}", e);
             HttpResponse::InternalServerError().body(e.to_string())

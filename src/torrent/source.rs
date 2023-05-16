@@ -25,9 +25,10 @@ impl Downloader for TorrentDownloader {
     fn download(&self, url: String) -> Option<String> {
         std::thread::spawn(move || {
             let client = reqwest::blocking::Client::builder()
-            .connect_timeout(Duration::from_secs(30))
-            .timeout(Duration::from_secs(30))
-            .build().unwrap();
+                .connect_timeout(Duration::from_secs(30))
+                .timeout(Duration::from_secs(30))
+                .build()
+                .unwrap();
             let result = client.get(&url).send();
             match result {
                 Ok(res) => {
@@ -37,13 +38,13 @@ impl Downloader for TorrentDownloader {
                         Ok(t) => {
                             info!("Body...");
                             return Some(t);
-                        },
+                        }
                         Err(e) => {
                             error!("Err: {e}");
                             return None;
                         }
                     }
-                },
+                }
                 Err(e) => {
                     error!("Nothing found! {e}");
                     return None;
