@@ -31,28 +31,25 @@ impl Searcher {
         let barrier = Arc::new(Barrier::new(size));
 
         for adapter in &self.adapters {
-            let c = Arc::clone(&barrier);
-            let terms = String::from(terms);
-            let a = Arc::clone(&adapter);
+            let trms = String::from(terms);
+            let brr = Arc::clone(&barrier);
+            let adptr: Arc<dyn SourceAdapter + Send + Sync> = Arc::clone(&adapter);
 
             handles.push(thread::spawn(move || {
-                c.wait();
-                //this was really painful
-                (|terms: &str, adapter: Arc<dyn SourceAdapter>| {
-                    let url = adapter.build_url(&terms);
-                    info!("Scraping: {url}");
-                    let document = adapter.get_document(url);
-                    match document {
-                        Some(s) => {
-                            let html = adapter.scrap_from_document(s);
-                            adapter.select_results(html)
-                        }
-                        None => {
-                            error!("Error scraping page!");
-                            vec![]
-                        }
+                brr.wait();
+                let url = adptr.build_url(&trms);
+                info!("Scraping: {url}");
+                let document = adptr.get_document(url);
+                match document {
+                    Some(s) => {
+                        let html = adptr.scrap_from_document(s);
+                        adptr.select_results(html)
                     }
-                })(&terms, a)
+                    None => {
+                        error!("Error scraping page!");
+                        vec![]
+                    }
+                }
             }));
         }
 
