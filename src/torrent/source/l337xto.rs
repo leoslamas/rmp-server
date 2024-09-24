@@ -6,7 +6,7 @@ use crate::torrent::search::SearchResult;
 
 use super::{Downloader, SourceAdapter};
 
-const BASE_URL: &str = "https://1337x.to";
+const BASE_URL: &str = "https://1337xx.to";
 
 pub struct L337xTo {
     downloader: Box<dyn Downloader + Send + Sync>,
@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn build_url() {
         let url = get_adapter().build_url("test");
-        assert_eq!(url, "https://1337x.to/search/test/1/");
+        assert_eq!(url, "https://1337xx.to/search/test/1/");
     }
 
     #[test]
