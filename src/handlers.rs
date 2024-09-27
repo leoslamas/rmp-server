@@ -22,7 +22,7 @@ async fn search_torrents(Query(params): Query<QueryParams>, searcher: Data<Searc
     info!("Searching for {}!", params.terms);
 
     if params.terms.len() > 1 {
-        let search_result = searcher.search(&params.terms.trim());
+        let search_result = searcher.search(params.terms.trim());
         HttpResponse::Ok().json(search_result)
     } else {
         HttpResponse::InternalServerError().body("Length > 2")

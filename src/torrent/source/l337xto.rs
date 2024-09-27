@@ -2,18 +2,16 @@ use std::sync::Arc;
 
 use scraper::{Html, Selector};
 
-use crate::torrent::search::SearchResult;
-
-use super::{Downloader, SourceAdapter};
+use crate::torrent::{downloader::{Downloader, SourceAdapter}, search::SearchResult};
 
 const BASE_URL: &str = "https://1337xx.to";
 
 pub struct L337xTo {
-    downloader: Box<dyn Downloader + Send + Sync>,
+    downloader: Box<dyn Downloader>,
 }
 
 impl L337xTo {
-    pub fn new(downloader: Box<dyn Downloader + Send + Sync>) -> Arc<Self> {
+    pub fn new(downloader: Box<dyn Downloader>) -> Arc<Self> {
         Arc::new(Self { downloader })
     }
 }

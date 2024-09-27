@@ -1,5 +1,3 @@
-use std::env;
-
 use serde::{Deserialize, Serialize};
 use transmission_rpc::{
     types::{
@@ -100,11 +98,4 @@ impl Client {
             .torrent_action(TorrentAction::Start, vec![Id::Id(id)])
             .await
     }
-}
-
-pub fn client() -> Client {
-    let url = env::var("TURL").unwrap();
-    let client = TransClient::new(&url);
-
-    Client::new(client)
 }

@@ -5,10 +5,16 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use super::source::{L337xTo, SourceAdapter, TorrentDownloader};
+use super::downloader::SourceAdapter;
 
 pub struct Searcher {
-    adapters: Vec<Arc<dyn SourceAdapter + Send + Sync>>,
+    adapters: Vec<Arc<dyn SourceAdapter>>,
+}
+
+impl Default for Searcher {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Searcher {
@@ -18,7 +24,7 @@ impl Searcher {
         }
     }
 
-    pub fn using(mut self, adapter: Arc<dyn SourceAdapter + Send + Sync>) -> Self {
+    pub fn using(mut self, adapter: Arc<dyn SourceAdapter>) -> Self {
         self.adapters.push(adapter);
         self
     }
@@ -33,7 +39,7 @@ impl Searcher {
         for adapter in &self.adapters {
             let trms = String::from(terms);
             let brr = Arc::clone(&barrier);
-            let adptr: Arc<dyn SourceAdapter + Send + Sync> = Arc::clone(&adapter);
+            let adptr: Arc<dyn SourceAdapter> = Arc::clone(adapter);
 
             handles.push(thread::spawn(move || {
                 brr.wait();
@@ -92,8 +98,4 @@ impl PartialEq for SearchResult {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name && self.seeders == other.seeders
     }
-}
-
-pub fn searcher() -> Searcher {
-    Searcher::new().using(L337xTo::new(TorrentDownloader::new()))
 }
