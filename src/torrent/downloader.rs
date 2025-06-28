@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use log::{error, info};
 use scraper::{Html, Selector};
 
 use super::search::SearchResult;

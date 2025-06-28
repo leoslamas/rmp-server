@@ -1,24 +1,35 @@
 use std::sync::Arc;
 
+use log::warn;
 use scraper::{Html, Selector};
 
-use crate::torrent::{downloader::{Downloader, SourceAdapter}, search::SearchResult};
-
-const BASE_URL: &str = "https://1337xx.to";
+use crate::{
+    config::L337xToConfig,
+    torrent::{downloader::{Downloader, SourceAdapter}, search::SearchResult}
+};
 
 pub struct L337xTo {
     downloader: Box<dyn Downloader>,
+    config: L337xToConfig,
 }
 
 impl L337xTo {
     pub fn new(downloader: Box<dyn Downloader>) -> Arc<Self> {
-        Arc::new(Self { downloader })
+        Arc::new(Self { 
+            downloader,
+            config: L337xToConfig::default(),
+        })
+    }
+
+    #[allow(dead_code)]
+    pub fn with_config(downloader: Box<dyn Downloader>, config: L337xToConfig) -> Arc<Self> {
+        Arc::new(Self { downloader, config })
     }
 }
 
 impl SourceAdapter for L337xTo {
     fn build_url(&self, terms: &str) -> String {
-        format!("{}/search/{}/1/", BASE_URL, terms)
+        format!("{}/search/{}/1/", self.config.base_url, terms)
     }
 
     fn get_document(&self, url: String) -> Option<String> {
@@ -28,13 +39,13 @@ impl SourceAdapter for L337xTo {
     fn select_results(&self, fragment: Html) -> Vec<SearchResult> {
         let mut search_results = Vec::new();
 
-        let selector = Selector::parse("tr").unwrap();
-        let name_selector = Selector::parse(".name").unwrap();
-        let seeders_selector = Selector::parse(".seeds").unwrap();
-        let leechers_selector = Selector::parse(".leeches").unwrap();
-        let size_selector = Selector::parse(".size").unwrap();
-        let url_selector = Selector::parse(".name a:nth-child(2)").unwrap();
-        let magnet_selector = Selector::parse("a[href^=magnet]").unwrap();
+        let selector = Selector::parse(&self.config.selectors.row).unwrap();
+        let name_selector = Selector::parse(&self.config.selectors.name).unwrap();
+        let seeders_selector = Selector::parse(&self.config.selectors.seeders).unwrap();
+        let leechers_selector = Selector::parse(&self.config.selectors.leechers).unwrap();
+        let size_selector = Selector::parse(&self.config.selectors.size).unwrap();
+        let url_selector = Selector::parse(&self.config.selectors.url).unwrap();
+        let magnet_selector = Selector::parse(&self.config.selectors.magnet).unwrap();
 
         for row in fragment.select(&selector).take(6) {
             let name_sel = row.select(&name_selector).next();
@@ -42,7 +53,7 @@ impl SourceAdapter for L337xTo {
             let leechers_sel = row.select(&leechers_selector).next();
             let size_sel = row.select(&size_selector).next();
             let url_sel = row.select(&url_selector).next();
-            let (name, seeders, leechers, size, url);
+            let (name, seeders, leechers, size, url): (String, u32, u32, String, String);
 
             let (Some(name_s), Some(seed_s), Some(leech_s), Some(size_s), Some(url_s)) =
             (name_sel, seeders_sel, leechers_sel, size_sel, url_sel) else {
@@ -53,13 +64,13 @@ impl SourceAdapter for L337xTo {
             warn!("name: {}", found);
             name = found;
 
-            let found = seed_s.text().map(String::from).collect::<String>();
-            warn!("seeders: {}", found);
-            seeders = found;
+            let seeders_text = seed_s.text().map(String::from).collect::<String>();
+            warn!("seeders: {}", seeders_text);
+            seeders = seeders_text.trim().parse().unwrap_or(0);
 
-            let found = leech_s.text().map(String::from).collect::<String>();
-            warn!("leechers: {}", found);
-            leechers = found;
+            let leechers_text = leech_s.text().map(String::from).collect::<String>();
+            warn!("leechers: {}", leechers_text);
+            leechers = leechers_text.trim().parse().unwrap_or(0);
 
             let found = size_s.text().map(String::from).collect::<String>();
             let found_num = found.split_whitespace().next();
@@ -72,7 +83,7 @@ impl SourceAdapter for L337xTo {
             };
 
             warn!("url: {}", href);
-            let magnet_url = format!("{}{}", BASE_URL, String::from(href));
+            let magnet_url = format!("{}{}", self.config.base_url, String::from(href));
             let document = self.get_document(magnet_url).unwrap();
             url = self
                 .find_magnet(&document, &magnet_selector)
@@ -127,8 +138,8 @@ mod tests {
             .take(1)
         {
             assert_eq!("My.Torrent.Name", result.name);
-            assert_eq!("2992", result.seeders);
-            assert_eq!("173", result.leechers);
+            assert_eq!(2992, result.seeders);
+            assert_eq!(173, result.leechers);
             assert_eq!("222.4", result.size);
             assert_eq!("magnet:My.Magnet.Link", result.url);
         }

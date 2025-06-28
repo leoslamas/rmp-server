@@ -7,13 +7,13 @@ use transmission_rpc::{
     TransClient,
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Torrent {
-    id: i64,
-    name: String,
-    status: String,
-    size: i64,
-    progress: i32,
+    pub id: i64,
+    pub name: String,
+    pub status: String,
+    pub size: i64,
+    pub progress: i32,
 }
 
 pub struct Client {
@@ -97,5 +97,92 @@ impl Client {
         self.client
             .torrent_action(TorrentAction::Start, vec![Id::Id(id)])
             .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_torrent_creation() {
+        let torrent = Torrent {
+            id: 1,
+            name: "Test Movie".to_string(),
+            status: "downloading".to_string(),
+            size: 1000000000, // 1GB
+            progress: 50,
+        };
+
+        assert_eq!(torrent.id, 1);
+        assert_eq!(torrent.name, "Test Movie");
+        assert_eq!(torrent.status, "downloading");
+        assert_eq!(torrent.size, 1000000000);
+        assert_eq!(torrent.progress, 50);
+    }
+
+    #[test]
+    fn test_torrent_clone() {
+        let torrent = Torrent {
+            id: 1,
+            name: "Test Movie".to_string(),
+            status: "downloading".to_string(),
+            size: 1000000000,
+            progress: 50,
+        };
+
+        let cloned = torrent.clone();
+        assert_eq!(torrent.id, cloned.id);
+        assert_eq!(torrent.name, cloned.name);
+        assert_eq!(torrent.status, cloned.status);
+        assert_eq!(torrent.size, cloned.size);
+        assert_eq!(torrent.progress, cloned.progress);
+    }
+
+    #[test]
+    fn test_torrent_serialization() {
+        let torrent = Torrent {
+            id: 1,
+            name: "Test Movie".to_string(),
+            status: "downloading".to_string(),
+            size: 1000000000,
+            progress: 50,
+        };
+
+        // Test that the torrent can be serialized to JSON
+        let json = serde_json::to_string(&torrent);
+        assert!(json.is_ok());
+        
+        // Test that it can be deserialized back
+        let json_str = json.unwrap();
+        let deserialized = serde_json::from_str::<Torrent>(&json_str);
+        assert!(deserialized.is_ok());
+        
+        let deserialized_torrent = deserialized.unwrap();
+        assert_eq!(torrent.id, deserialized_torrent.id);
+        assert_eq!(torrent.name, deserialized_torrent.name);
+        assert_eq!(torrent.status, deserialized_torrent.status);
+        assert_eq!(torrent.size, deserialized_torrent.size);
+        assert_eq!(torrent.progress, deserialized_torrent.progress);
+    }
+
+    // Note: The Client struct methods require an actual TransClient which needs 
+    // a running Transmission daemon. For true unit testing, we would need to 
+    // create a trait for the transmission client and then create mock implementations.
+    // For integration tests, these would test against a real or test Transmission instance.
+
+    #[test]
+    fn test_client_creation() {
+        // This test just verifies that we can create a client struct
+        // In a real scenario, this would require a running transmission daemon
+        // or a mocked transmission client
+        
+        use transmission_rpc::TransClient;
+        let trans_client = TransClient::new("http://localhost:9091/transmission/rpc");
+        let _client = Client::new(trans_client);
+        
+        // Just verify the client was created - we can't test the methods without
+        // a running transmission daemon or proper mocking
+        assert!(true); // Placeholder assertion
     }
 }
