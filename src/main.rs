@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
         loop {
             let (_, addr) = socket.recv_from(&mut [1; 1]).await.unwrap();
             socket.send_to(&[1; 1], &addr).await.unwrap();
-            info!("Discovering!");
+            info!("Discovering! Discovery packet sent to {}", addr);
         }
     });
 
